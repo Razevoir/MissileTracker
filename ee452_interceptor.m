@@ -28,6 +28,42 @@ global wd % desired angular position
 vd = 10;
 wd = 2*pi/3;
 
+%% Iterative Solver to replace ode45
+
+% set up dynamics for interceptor
+A = [0 0 0 ;
+     0 0 1 ;
+     0 0 0];
+B = [1 0 ;
+     0 0 ;
+     0 1];
+X = [-vd, pi/2-wd, 0]; % initial conditions
+x = X.';
+dt = 0.05; % timestep size
+end_time = 10;
+for n = dt:dt:end_time
+% define control law
+u = zeros(2,1);
+r = [vd; % desired forward velocity
+     wd; % desired angular position
+     0]; % desired angular velocity
+p = [-1 -2 -3];
+k = place(A,B,p);
+u = -k*x;
+
+% define results
+dx = A*x + B*u;
+x = x + dx*dt;
+X = [X; x.'];
+
+end
+tspan = 0:dt:end_time;
+
+figure(1)
+plot(tspan,X)
+legend('x1 - forward velocity','x2 - angular position','x3 - angular velocity')
+grid on;
+
 %% plot dynamics
 t = 20; % how far to take data from the IC
 ts = 500; % sample size
@@ -36,18 +72,18 @@ tol = 1e-10; % universal tolerance
 options = odeset('RelTol',tol,'AbsTol',[tol tol tol]); % tolerances
 init_cond = [-vd, pi/2-wd, 0]; % initial conditions
 [T,X] = ode45(@interceptor45,tspan,init_cond,options);
-figure(1)
+figure(2)
 plot(tspan,X)
 legend('x1 - forward velocity','x2 - angular position','x3 - angular velocity')
 grid on;
 
-%% define initial position and orientation
+%% define initial position and orientation for iteration
 
 x = 0; % initial x position
 y = 0; % initial y position
 phi = 0; % initial angle added onto desired angle
 
-%% iterate through time
+%% iterate ode45 results through time
 for n = 2:1:ts
     % X(n,1) is forward velocity
     % X(n,2) is angular position
@@ -68,7 +104,7 @@ for n = 2:1:ts
     direction = atan2(yt-y, xt-x);
     
     % draw the interceptor on the x-y plane
-    figure(2)
+    figure(3)
     plot(x,y,'ko')
     w = 50; % window size
     axis([-w w 0 w])
@@ -76,7 +112,7 @@ for n = 2:1:ts
     hold on
     
     % draw the target
-    figure(2)
+    figure(3)
     plot(xt,yt,'ro')
     
     % draw the desired time to impact
