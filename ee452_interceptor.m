@@ -63,6 +63,10 @@ for n = 2:1:ts
     x = x + (X(n,1)+vd)*cos(phi)*dt;
     y = y + (X(n,1)+vd)*sin(phi)*dt;
     
+    % Calculate the trajectory to the target
+    distance = sqrt((xt-x)^2+(yt-y)^2);
+    direction = atan2(yt-y, xt-x);
+    
     % draw the interceptor on the x-y plane
     figure(2)
     plot(x,y,'ko')
@@ -79,6 +83,13 @@ for n = 2:1:ts
     timer = sprintf('%d',int8(t_hit));
     text(1.1*xt,1.1*yt,timer)
     t_hit = t_hit - dt;
+    
+    % Draw the distance and direction
+    dist_text = sprintf('%f',distance);
+    dir_text = sprintf('%f', direction);
+    text(x+5, y-5, dist_text);
+    text(x+5, y-10, dir_text);
+    
     hold off
     
     % capture frame for movie
