@@ -32,10 +32,12 @@ X = [vd, 0, 0]; % initial conditions
 x = X.';
 dt = 0.05; % timestep size
 end_time = 10;
+i = 1;
 for n = dt:dt:end_time
+    i = i+1;
     % define control law
     %vd = 10;%sqrt((xt-xm)^2+(yt-ym)^2);
-    wd = atan2(yt-ym, xt-xm);
+    wd = atan2(yt-ym(i-1), xt-xm(i-1));
     r = [vd; % desired forward velocity
         wd; % desired angular position
         0]; % desired angular velocity
@@ -49,8 +51,8 @@ for n = dt:dt:end_time
     x = x + dx*dt;
     X = [X; x.'];
     
-    xm = xm+x(1)*cos(x(2))*dt;
-    ym = ym+x(1)*sin(x(2))*dt;
+    xm(i) = xm(i-1)+x(1)*cos(x(2))*dt;
+    ym(i) = ym(i-1)+x(1)*sin(x(2))*dt;
     
 end
 tspan = 0:dt:end_time;
@@ -63,8 +65,6 @@ grid on;
 
 %% define initial position and orientation for iteration
 
-xm = 0; % initial x position
-ym = 0; % initial y position
 phi = 0; % initial angle added onto desired angle
 
 %% iterate ode45 results through time
@@ -73,28 +73,21 @@ for n = 2:1:size(tspan')
     % X(n,2) is angular position
     % X(n,3) is angular velocity
     
-    % update angular orientation
-    phi = X(n,2);
-    
-    % update position
-    xm = xm + X(n,1)*cos(phi)*dt;
-    ym = ym + X(n,1)*sin(phi)*dt;
-    
     % Calculate the trajectory to the target
-    distance = sqrt((xt-xm)^2+(yt-ym)^2);
-    direction = atan2(yt-ym, xt-xm);
+    distance = sqrt((xt-xm(n))^2+(yt-ym(n))^2);
+    direction = atan2(yt-ym(n), xt-xm(n));
     
     % draw the interceptor on the x-y plane
     figure(3)
-    plot(xm,ym,'ko')
+    plot(xm(n),ym(n),'ko')
     w = 50; % window size
     axis([-w w 0 w])
     
     % Draw the distance and direction
     dist_text = sprintf('%f',distance);
     dir_text = sprintf('%f', direction);
-    text(xm+5, ym-5, dist_text);
-    text(xm+5, ym-10, dir_text);
+    text(xm(n)+5, ym(n)-5, dist_text);
+    text(xm(n)+5, ym(n)-10, dir_text);
     
     grid on
     hold on
