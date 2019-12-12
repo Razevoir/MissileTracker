@@ -9,7 +9,6 @@ xt = 10;
 yt = 40;
 
 % time to hit the target
-global t_hit
 t_hit = 10;
 
 % missile location in cartesian coordinates
@@ -28,10 +27,10 @@ A = [0 0 0 ;
 B = [1 0 ;
      0 0 ;
      0 1];
-X = [vd, 0, 0]; % initial conditions
+X = [vd, pi/2, 0]; % initial conditions
 x = X.';
 dt = 0.05; % timestep size
-end_time = 10;
+end_time = t_hit;
 i = 1;
 for n = dt:dt:end_time
     i = i+1;
@@ -68,6 +67,7 @@ grid on;
 phi = 0; % initial angle added onto desired angle
 
 %% iterate ode45 results through time
+tr = t_hit; % time remaining to impact
 for n = 2:1:size(tspan')
     % X(n,1) is forward velocity
     % X(n,2) is angular position
@@ -97,9 +97,9 @@ for n = 2:1:size(tspan')
     plot(xt,yt,'ro')
     
     % draw the desired time to impact
-    timer = sprintf('%d',int8(t_hit));
+    timer = sprintf('%d',int8(tr));
     text(1.1*xt,1.1*yt,timer)
-    t_hit = t_hit - dt;
+    tr = tr - dt;
     
     hold off
     
