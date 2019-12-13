@@ -32,6 +32,10 @@ x = X.';
 dt = 0.05; % timestep size
 end_time = t_hit;
 i = 1;
+tr = t_hit; % time remaining to impact
+
+phi = 0; % initial angle added onto desired angle
+
 for n = dt:dt:end_time
     i = i+1;
     % define control law
@@ -53,41 +57,25 @@ for n = dt:dt:end_time
     xm(i) = xm(i-1)+x(1)*cos(x(2))*dt;
     ym(i) = ym(i-1)+x(1)*sin(x(2))*dt;
     
-end
-tspan = 0:dt:end_time;
-
-figure(1)
-plot(tspan,X)
-legend('x1 - forward velocity','x2 - angular position','x3 - angular velocity')
-grid on;
-
-
-%% define initial position and orientation for iteration
-
-phi = 0; % initial angle added onto desired angle
-
-%% iterate ode45 results through time
-tr = t_hit; % time remaining to impact
-for n = 2:1:size(tspan')
     % X(n,1) is forward velocity
     % X(n,2) is angular position
     % X(n,3) is angular velocity
     
     % Calculate the trajectory to the target
-    distance = sqrt((xt-xm(n))^2+(yt-ym(n))^2);
-    direction = atan2(yt-ym(n), xt-xm(n));
+    distance = sqrt((xt-xm(i))^2+(yt-ym(i))^2);
+    direction = atan2(yt-ym(i), xt-xm(i));
     
     % draw the interceptor on the x-y plane
     figure(3)
-    plot(xm(n),ym(n),'ko')
+    plot(xm(i),ym(i),'ko')
     w = 50; % window size
     axis([-w w 0 w])
     
     % Draw the distance and direction
     dist_text = sprintf('%f',distance);
     dir_text = sprintf('%f', direction);
-    text(xm(n)+5, ym(n)-5, dist_text);
-    text(xm(n)+5, ym(n)-10, dir_text);
+    text(xm(i)+5, ym(i)-5, dist_text);
+    text(xm(i)+5, ym(i)-10, dir_text);
     
     grid on
     hold on
@@ -104,6 +92,13 @@ for n = 2:1:size(tspan')
     hold off
     
     % capture frame for movie
-    F(n-1) = getframe;
+    F(i-1) = getframe;
     % movie(F) % to play movie
+    
 end
+tspan = 0:dt:end_time;
+
+figure(1)
+plot(tspan,X)
+legend('x1 - forward velocity','x2 - angular position','x3 - angular velocity')
+grid on;
