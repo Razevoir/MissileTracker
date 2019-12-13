@@ -9,7 +9,7 @@ xt = 10;
 yt = 40;
 
 % time to hit the target
-t_hit = 10;
+t_hit = 4;
 
 % missile location in cartesian coordinates
 xm = 0;
@@ -40,7 +40,7 @@ phi = 0; % initial angle added onto desired angle
 for n = dt:dt:end_time
     i = i+1;
     % define control law
-    %vd = 10;%sqrt((xt-xm)^2+(yt-ym)^2);
+    vd = sqrt((xt-xm(i-1))^2+(yt-ym(i-1))^2)/tr;
     wd = atan2(yt-ym(i-1), xt-xm(i-1));
     r = [vd; % desired forward velocity
         wd; % desired angular position
@@ -90,9 +90,9 @@ for n = dt:dt:end_time
     plot(xt,yt,'ro')
     
     % draw the desired time to impact
-    timer = sprintf('%d',int8(tr));
-    text(1.1*xt,1.1*yt,timer)
     tr = tr - dt;
+    timer = sprintf('%.01f',tr);
+    text(1.1*xt,1.1*yt,timer)
     
     hold off
     
