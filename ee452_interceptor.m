@@ -33,6 +33,7 @@ dt = 0.05; % timestep size
 end_time = t_hit;
 i = 1;
 tr = t_hit; % time remaining to impact
+U = zeros(1,2);
 
 phi = 0; % initial angle added onto desired angle
 
@@ -44,29 +45,33 @@ for n = dt:dt:end_time
     r = [vd; % desired forward velocity
         wd; % desired angular position
         0]; % desired angular velocity
-    p = [-1 -2 -3];
-    k = place(A,B,p);
-    xh = x-r;
+    p = [-1 -2 -3]; % desired pole locations
+    k = place(A,B,p); % state feedback gains
+    xh = x-r; % error states
     xh(2) = wrapToPi(xh(2));
     
-    % define results
-    dx = (A-B*k)*(xh);
-    x = x + dx*dt;
-    X = [X; x.'];
+    % calculate control effort
+    u = -k*xh; % control input
+    U = [U;u']; % control input matrix for plotting
     
-    xm(i) = xm(i-1)+x(1)*cos(x(2))*dt;
-    ym(i) = ym(i-1)+x(1)*sin(x(2))*dt;
+    % define results
+    dx = (A-B*k)*(xh); % change in states
+    x = x + dx*dt; % update old states to new states
+    X = [X; x.']; % add new states to memory to be plotted
+    
+    xm(i) = xm(i-1)+x(1)*cos(x(2))*dt; % x-coordinate of the missile
+    ym(i) = ym(i-1)+x(1)*sin(x(2))*dt; % y-coordinate of the missile
     
     % X(n,1) is forward velocity
     % X(n,2) is angular position
     % X(n,3) is angular velocity
     
     % Calculate the trajectory to the target
-    distance = sqrt((xt-xm(i))^2+(yt-ym(i))^2);
-    direction = atan2(yt-ym(i), xt-xm(i));
+    distance = sqrt((xt-xm(i))^2+(yt-ym(i))^2); % radial distance to target
+    direction = atan2(yt-ym(i), xt-xm(i)); % angular displacement from facing the target
     
     % draw the interceptor on the x-y plane
-    figure(3)
+    figure(1)
     plot(xm(i),ym(i),'ko')
     w = 50; % window size
     axis([-w w 0 w])
@@ -81,7 +86,7 @@ for n = dt:dt:end_time
     hold on
     
     % draw the target
-    %figure(3)
+    % figure(1)
     plot(xt,yt,'ro')
     
     % draw the desired time to impact
@@ -98,7 +103,14 @@ for n = dt:dt:end_time
 end
 tspan = 0:dt:end_time;
 
-figure(1)
+% Plot states VS time
+figure(2)
 plot(tspan,X)
 legend('x1 - forward velocity','x2 - angular position','x3 - angular velocity')
-grid on;
+grid on
+
+% plot controller effort VS time
+figure(3)
+plot(tspan,U)
+legend('u1 - forward thrusters','u2 - angular thrusters')
+grid on
