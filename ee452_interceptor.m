@@ -9,7 +9,7 @@ xt = 10;
 yt = 40;
 
 % time to hit the target
-t_hit = 4;
+t_hit = 5;
 
 % missile location in cartesian coordinates
 xm = 0;
@@ -27,35 +27,39 @@ A = [0 0 0 ;
 B = [1 0 ;
      0 0 ;
      0 1];
+ 
+p = [-20 -25 -30]; % desired pole locations
+k = place(A,B,p); % state feedback gains
+
 X = [vd, pi/2, 0]; % initial conditions
 x = X.';
-dt = 0.05; % timestep size
+
+dt = 0.02; % timestep size
 end_time = t_hit;
-i = 1;
 tr = t_hit; % time remaining to impact
+
 U = zeros(1,2);
 
-phi = 0; % initial angle added onto desired angle
+i = 1;
 
 for n = dt:dt:end_time
     i = i+1;
     % define control law
-    vd = sqrt((xt-xm(i-1))^2+(yt-ym(i-1))^2)/tr;
-    wd = atan2(yt-ym(i-1), xt-xm(i-1));
+    d = sqrt((xt-xm(i-1))^2+(yt-ym(i-1))^2);
+    vd = d/tr;
+    w = atan2(yt-ym(i-1), xt-xm(i-1));
+    wd = wrapToPi(w);
     r = [vd; % desired forward velocity
         wd; % desired angular position
         0]; % desired angular velocity
-    p = [-1 -2 -3]; % desired pole locations
-    k = place(A,B,p); % state feedback gains
     xh = x-r; % error states
-    xh(2) = wrapToPi(xh(2));
     
     % calculate control effort
     u = -k*xh; % control input
     U = [U;u']; % control input matrix for plotting
     
     % define results
-    dx = (A-B*k)*(xh); % change in states
+    dx = A*x+B*u; % change in states
     x = x + dx*dt; % update old states to new states
     X = [X; x.']; % add new states to memory to be plotted
     
@@ -66,9 +70,12 @@ for n = dt:dt:end_time
     % X(n,2) is angular position
     % X(n,3) is angular velocity
     
-    % Calculate the trajectory to the target
-    distance = sqrt((xt-xm(i))^2+(yt-ym(i))^2); % radial distance to target
-    direction = atan2(yt-ym(i), xt-xm(i)); % angular displacement from facing the target
+    % Uncomment to model movement in the target
+    %xt = xt-5*dt;
+    
+    % Uncomment to model noise in the target
+    xt = xt+(20*rand-10)*dt;
+    yt = yt+(20*rand-10)*dt;
     
     % draw the interceptor on the x-y plane
     figure(1)
@@ -77,8 +84,8 @@ for n = dt:dt:end_time
     axis([-w w 0 w])
     
     % Draw the distance and direction
-    dist_text = sprintf('%f',distance);
-    dir_text = sprintf('%f', direction);
+    dist_text = sprintf('%f',d);
+    dir_text = sprintf('%f', wd);
     text(xm(i)+5, ym(i)-5, dist_text);
     text(xm(i)+5, ym(i)-10, dir_text);
     
@@ -114,3 +121,12 @@ figure(3)
 plot(tspan,U)
 legend('u1 - forward thrusters','u2 - angular thrusters')
 grid on
+
+% v = VideoWriter('Interceptor.avi');
+% v.FrameRate = 50;
+% v.Quality = 95;
+% open(v)
+% for j=1:(i-1)
+%     writeVideo(v, F(j))
+% end
+% close(v)
