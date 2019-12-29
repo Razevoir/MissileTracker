@@ -71,17 +71,20 @@ for n = dt:dt:end_time
     % X(n,3) is angular velocity
     
     % Uncomment to model movement in the target
-    %xt = xt-5*dt;
+%     xt = xt-5*dt;
     
     % Uncomment to model noise in the target
-    xt = xt+(20*rand-10)*dt;
-    yt = yt+(20*rand-10)*dt;
+%     xt = xt+(20*rand-10)*dt;
+%     yt = yt+(20*rand-10)*dt;
     
     % draw the interceptor on the x-y plane
     figure(1)
     plot(xm(i),ym(i),'ko')
     w = 50; % window size
     axis([-w w 0 w])
+    title('Position of the Point Mass and Target')
+    xlabel('Horizontal Position')
+    ylabel('Vertical Position')
     
     % Draw the distance and direction
     dist_text = sprintf('%f',d);
@@ -113,12 +116,18 @@ tspan = 0:dt:end_time;
 % Plot states VS time
 figure(2)
 plot(tspan,X)
+title('System States vs Time')
+xlabel('Time')
+ylabel('Magnitude')
 legend('x1 - forward velocity','x2 - angular position','x3 - angular velocity')
 grid on
 
 % plot controller effort VS time
 figure(3)
 plot(tspan,U)
+title('Controller Effort vs Time')
+xlabel('Time')
+ylabel('Magnitude')
 legend('u1 - forward thrusters','u2 - angular thrusters')
 grid on
 
