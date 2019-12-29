@@ -87,8 +87,8 @@ for n = dt:dt:end_time
     ylabel('Vertical Position')
     
     % Draw the distance and direction
-    dist_text = sprintf('%f',d);
-    dir_text = sprintf('%f', wd);
+    dist_text = sprintf('Distance: %f',d);
+    dir_text = sprintf('Angular Offset: %f', wd);
     text(xm(i)+5, ym(i)-5, dist_text);
     text(xm(i)+5, ym(i)-10, dir_text);
     
@@ -101,7 +101,7 @@ for n = dt:dt:end_time
     
     % draw the desired time to impact
     tr = tr - dt;
-    timer = sprintf('%.01f',tr);
+    timer = sprintf('Time Remaining: %.01f',tr);
     text(1.1*xt,1.1*yt,timer)
     
     hold off
