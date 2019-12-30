@@ -47,12 +47,12 @@ for n = dt:dt:end_time
     % define control law
     d = sqrt((xt-xm(i-1))^2+(yt-ym(i-1))^2);
     vd = d/tr;
-    w = atan2(yt-ym(i-1), xt-xm(i-1));
-    wd = wrapToPi(w);
+    wd = atan2(yt-ym(i-1), xt-xm(i-1));
     r = [vd; % desired forward velocity
         wd; % desired angular position
         0]; % desired angular velocity
     xh = x-r; % error states
+    xh(2) = wrapToPi(xh(2));
     
     % calculate control effort
     u = -k*xh; % control input
