@@ -84,6 +84,9 @@ for n = dt:dt:end_time
     
     % calculate control effort
     u = -k*xh; % control input
+    % Apply limits
+    u(1) = median([-1 u(1) 3]);
+    u(2) = median([-1.5 u(2) 1.5]);
     U = [U;u']; % control input matrix for plotting
     
     % define results
@@ -98,7 +101,8 @@ for n = dt:dt:end_time
           x(1)*sin(x(2))];
     yh = y-r2;
     v = -k2*yh;
-    dy = C*y+D*v; %*[dx(1)*cos(x(2)) dx(1)*sin(x(2))]';
+    dy = C*y+D*v;
+    dy = dy-[0 0 0 1.5]'; % Gravity
     y = y+dy*dt;
     
     % Uncomment to model movement in the target
