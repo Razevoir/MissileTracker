@@ -5,22 +5,14 @@ clc; clear all; close all;
 % ... or as a position in 2d space to try and hit during flight
 
 % target location in cartesian coordinates
-xt = 10;
-yt = 40;
+yt=[10 0 40 0]';
 
 % time to hit the target
 t_hit = 5;
 
-% missile location in cartesian coordinates
-xm = 0;
-ym = 0;
+%% Missile dynamics
 
-vd = 5;
-wd = 2*pi/3;
-
-%% Iterative Solver to replace ode45
-
-% set up dynamics for interceptor
+% Set up high level dynamics for interceptor
 A = [0 0 0 ;
      0 0 1 ;
      0 0 0];
@@ -31,23 +23,46 @@ B = [1 0 ;
 p = [-20 -25 -30]; % desired pole locations
 k = place(A,B,p); % state feedback gains
 
-X = [vd, pi/2, 0]; % initial conditions
+% Set up cartesian plane dynamical model
+C = [0 1 0 0 ;
+     0 0 0 0 ;
+     0 0 0 1 ;
+     0 0 0 0];
+D = [1 0 ;
+     0 0 ;
+     0 1 ;
+     0 0];
+
+%% Missile states
+% Initial conditions
+vd = 5;
+wd = 2*pi/3;
+
+% States
+X = [vd, pi/2, 0];
 x = X.';
 
+% Cartesian coordinates
+y = zeros(4,1);
+
+%% Custom iterative solver
 dt = 0.02; % timestep size
 end_time = t_hit;
 tr = t_hit; % time remaining to impact
 
 U = zeros(1,2);
 
+% Used to capture frames
 i = 1;
 
 for n = dt:dt:end_time
-    i = i+1;
     % define control law
-    d = sqrt((xt-xm(i-1))^2+(yt-ym(i-1))^2);
+    e = yt-y;
+    
+    d=sqrt(e(1)^2+e(3)^2);
     vd = d/tr;
-    wd = atan2(yt-ym(i-1), xt-xm(i-1));
+    
+    wd = atan2(e(3),e(1));
     r = [vd; % desired forward velocity
         wd; % desired angular position
         0]; % desired angular velocity
@@ -63,23 +78,20 @@ for n = dt:dt:end_time
     x = x + dx*dt; % update old states to new states
     X = [X; x.']; % add new states to memory to be plotted
     
-    xm(i) = xm(i-1)+x(1)*cos(x(2))*dt; % x-coordinate of the missile
-    ym(i) = ym(i-1)+x(1)*sin(x(2))*dt; % y-coordinate of the missile
-    
-    % X(n,1) is forward velocity
-    % X(n,2) is angular position
-    % X(n,3) is angular velocity
+    % Update the cartesian coordinates
+    dy = C*y+D*[x(1)*cos(x(2)) x(1)*sin(x(2))]';
+    y = y+dy*dt;
     
     % Uncomment to model movement in the target
-%     xt = xt-5*dt;
+%     yt(1) = yt(1)-5*dt;
     
     % Uncomment to model noise in the target
-%     xt = xt+(20*rand-10)*dt;
-%     yt = yt+(20*rand-10)*dt;
+%     yt(1) = yt(1)+(20*rand-10)*dt;
+%     yt(3) = yt(3)+(20*rand-10)*dt;
     
     % draw the interceptor on the x-y plane
     figure(1)
-    plot(xm(i),ym(i),'ko')
+    plot(y(1),y(3),'ko')
     w = 50; % window size
     axis([-w w 0 w])
     title('Position of the Point Mass and Target')
@@ -89,24 +101,25 @@ for n = dt:dt:end_time
     % Draw the distance and direction
     dist_text = sprintf('Distance: %f',d);
     dir_text = sprintf('Angular Offset: %f', wd);
-    text(xm(i)+5, ym(i)-5, dist_text);
-    text(xm(i)+5, ym(i)-10, dir_text);
+    text(y(1)+5, y(3)-5, dist_text);
+    text(y(1)+5, y(3)-10, dir_text);
     
     grid on
     hold on
     
     % draw the target
     % figure(1)
-    plot(xt,yt,'ro')
+    plot(yt(1),yt(3),'ro')
     
     % draw the desired time to impact
     tr = tr - dt;
     timer = sprintf('Time Remaining: %.01f',tr);
-    text(1.1*xt,1.1*yt,timer)
+    text(1.1*y(1),1.1*y(3),timer)
     
     hold off
     
     % capture frame for movie
+    i = i+1;
     F(i-1) = getframe;
     % movie(F) % to play movie
     
