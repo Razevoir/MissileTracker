@@ -28,22 +28,35 @@ C = [0 1 0 0 ;
      0 0 0 0 ;
      0 0 0 1 ;
      0 0 0 0];
-D = [1 0 ;
+D = [0 0 ;
+     1 0 ;
      0 0 ;
-     0 1 ;
-     0 0];
+     0 1];
+ 
+ p2 = [-20 -25 -30 -35];
+ k2 = place(C,D,p2);
 
 %% Missile states
 % Initial conditions
 vd = 5;
-wd = 2*pi/3;
+wd = pi/2;
 
 % States
-X = [vd, pi/2, 0];
+% x(1) => Forward velocity
+% x(2) => Angular position
+% x(3) => Angular acceleration
+X = [vd, wd, 0];
 x = X.';
 
 % Cartesian coordinates
-y = zeros(4,1);
+% y(1) => x position
+% y(2) => x velocity
+% y(3) => y position
+% y(4) => y velocity
+y = [0 ;
+     vd*cos(wd) ;
+     0 ;
+     vd*sin(wd)];
 
 %% Custom iterative solver
 dt = 0.02; % timestep size
@@ -64,8 +77,8 @@ for n = dt:dt:end_time
     
     wd = atan2(e(3),e(1));
     r = [vd; % desired forward velocity
-        wd; % desired angular position
-        0]; % desired angular velocity
+         wd; % desired angular position
+         0]; % desired angular velocity
     xh = x-r; % error states
     xh(2) = wrapToPi(xh(2));
     
@@ -78,8 +91,14 @@ for n = dt:dt:end_time
     x = x + dx*dt; % update old states to new states
     X = [X; x.']; % add new states to memory to be plotted
     
-    % Update the cartesian coordinates
-    dy = C*y+D*[x(1)*cos(x(2)) x(1)*sin(x(2))]';
+    % Define control law for cartesian coordinates
+    r2 = [y(1) ;
+          x(1)*cos(x(2)) ;
+          y(3) ;
+          x(1)*sin(x(2))];
+    yh = y-r2;
+    v = -k2*yh;
+    dy = C*y+D*v; %*[dx(1)*cos(x(2)) dx(1)*sin(x(2))]';
     y = y+dy*dt;
     
     % Uncomment to model movement in the target
