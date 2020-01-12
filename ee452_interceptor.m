@@ -67,7 +67,7 @@ for n = 0:dt:end_time
          wd; % desired angular position
          0]; % desired angular velocity
      
-    [dx,u] = AngularControl(angular,r);
+    [dx,u] = Control(angular,r);
     angular.x = angular.x+dx*dt;
     
     % Store the output to plot later
@@ -80,7 +80,7 @@ for n = 0:dt:end_time
           cart.x(3) ;
           angular.x(1)*sin(angular.x(2))];
       
-    [dx2,u2] = AngularControl(cart,r2);
+    [dx2,u2] = Control(cart,r2);
     dx2 = dx2-[0 0 0 1.5]'; % Gravity
     cart.x = cart.x+dx2*dt;
     
