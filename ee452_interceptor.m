@@ -14,7 +14,6 @@ t_hit = 5;
 
 % Set up high level dynamics for interceptor
 angular = AngularDynamics;
-X = angular.x';
 
 % Set up cartesian plane dynamical model
 C = [0 1 0 0 ;
@@ -41,15 +40,18 @@ y = [0 ;
 
 %% Custom iterative solver
 dt = 0.01; % timestep size
-end_time = t_hit;
+end_time = t_hit; % Can be changed to show behavior after collision
+tspan = 0:dt:end_time;
+steps = size(tspan,2);
 tr = t_hit; % time remaining to impact
 
-U = zeros(1,2);
+X = zeros(steps,size(angular.x,1));
+U = zeros(steps,2);
 
 % Used to capture frames
 i = 1;
 
-for n = dt:dt:end_time
+for n = 0:dt:end_time
     % define control law
     e = yt-y;
     
@@ -66,8 +68,8 @@ for n = dt:dt:end_time
     angular.x = angular.x+dx*dt;
     
     % Store the output to plot later
-    U = [U;u'];
-    X = [X;angular.x'];
+    U(i,:) = u';
+    X(i,:) = angular.x';
     
     % Define control law for cartesian coordinates
     r2 = [y(1) ;
@@ -120,7 +122,6 @@ for n = dt:dt:end_time
     %F(i-1) = getframe;
     
 end
-tspan = 0:dt:end_time;
 
 % Plot states VS time
 figure(2)
