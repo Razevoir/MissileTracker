@@ -1,21 +1,26 @@
-function [dx,u] = AngularControl(A,B,x,k,r,limits)
+function [dx,u] = AngularControl(s,r)
 %ANGULARDYNAMICS Summary of this function goes here
 %   Detailed explanation goes here
 
 % Determine the error
-xh = x-r;
-xh(2) = wrapToPi(xh(2));
+xh = s.x-r;
+
+for i=1:size(s.wrap,2)
+    if s.wrap(i)
+        xh(i) = wrapToPi(xh(2));
+    end
+end
 
 % Calculate control input
-u = -k*xh;
+u = -s.k*xh;
 
 % Apply limits
-for i=1:size(limits,1)
-    u(i) = median([limits(i,1) u(i) limits(i,2)]);
+for i=1:size(s.limits,1)
+    u(i) = median([s.limits(i,1) u(i) s.limits(i,2)]);
 end
 
 % define results
-dx = A*x+B*u; % change in states
+dx = s.A*s.x+s.B*u; % change in states
 
 end
 

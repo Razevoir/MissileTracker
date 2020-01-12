@@ -7,6 +7,8 @@ s.A = [0 0 0 ;
 s.B = [1 0 ;
        0 0 ;
        0 1];
+   
+s.wrap = [0 1 0]; % Indicates that the second state should be wrapped to pi
  
 s.p = [-20 -25 -30]; % desired pole locations
 s.k = place(s.A,s.B,s.p); % state feedback gains
@@ -22,7 +24,7 @@ s.wi = pi/2;
 s.x = [s.vi, s.wi, 0]';
 
 % Effort limits
-s.limits = [-1 3;-1.5 1.5];
+s.limits = [-5 20;-5 5];
 
 end
 

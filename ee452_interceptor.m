@@ -40,7 +40,7 @@ y = [0 ;
      angular.vi*sin(angular.wi)];
 
 %% Custom iterative solver
-dt = 0.02; % timestep size
+dt = 0.01; % timestep size
 end_time = t_hit;
 tr = t_hit; % time remaining to impact
 
@@ -62,7 +62,7 @@ for n = dt:dt:end_time
          wd; % desired angular position
          0]; % desired angular velocity
      
-    [dx,u] = AngularControl(angular.A,angular.B,angular.x,angular.k,r,angular.limits);
+    [dx,u] = AngularControl(angular,r);
     angular.x = angular.x+dx*dt;
     
     % Store the output to plot later
@@ -106,7 +106,6 @@ for n = dt:dt:end_time
     hold on
     
     % draw the target
-    % figure(1)
     plot(yt(1),yt(3),'ro')
     
     % draw the desired time to impact
@@ -118,8 +117,7 @@ for n = dt:dt:end_time
     
     % capture frame for movie
     i = i+1;
-    F(i-1) = getframe;
-    % movie(F) % to play movie
+    %F(i-1) = getframe;
     
 end
 tspan = 0:dt:end_time;
