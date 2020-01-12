@@ -1,13 +1,12 @@
-clc; clear all; close all;
+clc; clear; close all;
 
-%% define target
-% can define target as either desired velocity and angle for the missile...
-% ... or as a position in 2d space to try and hit during flight
+%% Define target
+% Target is defined as a collision point in both space and time
 
-% target location in cartesian coordinates
-yt=[10 0 40 0]';
+% Target collision location in cartesian coordinates
+yt = [10 0 40 0]';
 
-% time to hit the target
+% Collision time
 t_hit = 5;
 
 %% Missile dynamics
@@ -15,47 +14,30 @@ t_hit = 5;
 % Set up high level dynamics for interceptor
 angular = AngularDynamics;
 
-% Set up cartesian plane dynamical model
-cart.A = [0 1 0 0 ;
-     0 0 0 0 ;
-     0 0 0 1 ;
-     0 0 0 0];
-cart.B = [0 0 ;
-     1 0 ;
-     0 0 ;
-     0 1];
- 
-cart.p = [-20 -25 -30 -35];
-cart.k = place(cart.A,cart.B,cart.p);
-cart.wrap = [0 0 0 0];
-cart.limits = [-20 20 ;
-               -20 20];
+cart = CartesianDynamics;
 
-% Cartesian coordinates
-% x(1) => x position
-% x(2) => x velocity
-% x(3) => y position
-% x(4) => y velocity
-cart.x = [0 ;
-     angular.vi*cos(angular.wi) ;
-     0 ;
-     angular.vi*sin(angular.wi)];
+% Initial Conditions
+vi = 5;
+wi = pi/2;
+
+angular.x = [vi wi 0]';
+cart.x = [0 vi*cos(wi) 0 vi*sin(wi)]';
 
 %% Custom iterative solver
 dt = 0.02; % timestep size
+
 end_time = t_hit; % Can be changed to show behavior after collision
 tspan = 0:dt:end_time;
+
 steps = size(tspan,2);
 tr = t_hit; % time remaining to impact
 
 X = zeros(steps,size(angular.x,1));
 U = zeros(steps,2);
 
-% Used to capture frames
-i = 1;
-
-for n = 0:dt:end_time
-    % define control law
+for i = 1:length(tspan)
+    %% Define angular control law
+    
     e = yt-cart.x;
     
     d=sqrt(e(1)^2+e(3)^2);
@@ -74,7 +56,8 @@ for n = 0:dt:end_time
     U(i,:) = u';
     X(i,:) = angular.x';
     
-    % Define control law for cartesian coordinates
+    %% Define cartesian control law
+    
     r2 = [cart.x(1) ;
           angular.x(1)*cos(angular.x(2)) ;
           cart.x(3) ;
@@ -84,6 +67,8 @@ for n = 0:dt:end_time
     dx2 = dx2-[0 0 0 1.5]'; % Gravity
     cart.x = cart.x+dx2*dt;
     
+    %% Model the target
+    
     % Uncomment to model movement in the target
 %     yt(1) = yt(1)-5*dt;
     
@@ -91,39 +76,42 @@ for n = 0:dt:end_time
 %     yt(1) = yt(1)+(20*rand-10)*dt;
 %     yt(3) = yt(3)+(20*rand-10)*dt;
     
-    % draw the interceptor on the x-y plane
+    %% Draw the animation
+    
+    % Plot the missile
     figure(1)
     plot(cart.x(1),cart.x(3),'ko')
+    
+    % Set the window
     w = 50; % window size
     axis([-w w 0 w])
     title('Position of the Point Mass and Target')
     xlabel('Horizontal Position')
     ylabel('Vertical Position')
     
-    % Draw the distance and direction
+    % Draw the distance and direction information text
     dist_text = sprintf('Distance: %f',d);
     dir_text = sprintf('Angular Offset: %f', wd);
     text(cart.x(1)+5, cart.x(3)-5, dist_text);
     text(cart.x(1)+5, cart.x(3)-10, dir_text);
     
+    % Draw the desired time to impact
+    tr = t_hit - tspan(i);
+    timer = sprintf('Time Remaining: %.01f',tr);
+    text(cart.x(1)+5,cart.x(3),timer)
+    
+    % Draw the target
     grid on
     hold on
-    
-    % draw the target
     plot(yt(1),yt(3),'ro')
-    
-    % draw the desired time to impact
-    tr = t_hit - n;
-    timer = sprintf('Time Remaining: %.01f',tr);
-    text(1.1*cart.x(1),1.1*cart.x(3),timer)
-    
     hold off
     
-    % capture frame for movie
-    i = i+1;
-    %F(i-1) = getframe;
+    % Capture the frame to render the video
+%     F(i) = getframe;
     
 end
+
+%% Plot the system behavior
 
 % Plot states VS time
 figure(2)
@@ -142,6 +130,8 @@ xlabel('Time')
 ylabel('Magnitude')
 legend('u1 - forward thrusters','u2 - angular thrusters')
 grid on
+
+%% Write the video
 
 % v = VideoWriter('Interceptor.avi');
 % v.FrameRate = 50;

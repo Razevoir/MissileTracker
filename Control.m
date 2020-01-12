@@ -1,6 +1,8 @@
 function [dx,u] = Control(s,r)
-%ANGULARDYNAMICS Summary of this function goes here
-%   Detailed explanation goes here
+%CONTROL Takes a struct s representing a system and tracks reference r
+%   Control takes a struct containing specific information about a system
+%   and uses state feedback to try to get the states for the system to
+%   converge to a reference value r.
 
 % Determine the error
 xh = s.x-r;
