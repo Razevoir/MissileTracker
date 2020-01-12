@@ -16,30 +16,33 @@ t_hit = 5;
 angular = AngularDynamics;
 
 % Set up cartesian plane dynamical model
-C = [0 1 0 0 ;
+cart.A = [0 1 0 0 ;
      0 0 0 0 ;
      0 0 0 1 ;
      0 0 0 0];
-D = [0 0 ;
+cart.B = [0 0 ;
      1 0 ;
      0 0 ;
      0 1];
  
- p2 = [-20 -25 -30 -35];
- k2 = place(C,D,p2);
+cart.p = [-20 -25 -30 -35];
+cart.k = place(cart.A,cart.B,cart.p);
+cart.wrap = [0 0 0 0];
+cart.limits = [-20 20 ;
+               -20 20];
 
 % Cartesian coordinates
-% y(1) => x position
-% y(2) => x velocity
-% y(3) => y position
-% y(4) => y velocity
-y = [0 ;
+% x(1) => x position
+% x(2) => x velocity
+% x(3) => y position
+% x(4) => y velocity
+cart.x = [0 ;
      angular.vi*cos(angular.wi) ;
      0 ;
      angular.vi*sin(angular.wi)];
 
 %% Custom iterative solver
-dt = 0.01; % timestep size
+dt = 0.02; % timestep size
 end_time = t_hit; % Can be changed to show behavior after collision
 tspan = 0:dt:end_time;
 steps = size(tspan,2);
@@ -53,7 +56,7 @@ i = 1;
 
 for n = 0:dt:end_time
     % define control law
-    e = yt-y;
+    e = yt-cart.x;
     
     d=sqrt(e(1)^2+e(3)^2);
     vd = d/tr;
@@ -72,15 +75,14 @@ for n = 0:dt:end_time
     X(i,:) = angular.x';
     
     % Define control law for cartesian coordinates
-    r2 = [y(1) ;
+    r2 = [cart.x(1) ;
           angular.x(1)*cos(angular.x(2)) ;
-          y(3) ;
+          cart.x(3) ;
           angular.x(1)*sin(angular.x(2))];
-    yh = y-r2;
-    v = -k2*yh;
-    dy = C*y+D*v;
-    dy = dy-[0 0 0 1.5]'; % Gravity
-    y = y+dy*dt;
+      
+    [dx2,u2] = AngularControl(cart,r2);
+    dx2 = dx2-[0 0 0 1.5]'; % Gravity
+    cart.x = cart.x+dx2*dt;
     
     % Uncomment to model movement in the target
 %     yt(1) = yt(1)-5*dt;
@@ -91,7 +93,7 @@ for n = 0:dt:end_time
     
     % draw the interceptor on the x-y plane
     figure(1)
-    plot(y(1),y(3),'ko')
+    plot(cart.x(1),cart.x(3),'ko')
     w = 50; % window size
     axis([-w w 0 w])
     title('Position of the Point Mass and Target')
@@ -101,8 +103,8 @@ for n = 0:dt:end_time
     % Draw the distance and direction
     dist_text = sprintf('Distance: %f',d);
     dir_text = sprintf('Angular Offset: %f', wd);
-    text(y(1)+5, y(3)-5, dist_text);
-    text(y(1)+5, y(3)-10, dir_text);
+    text(cart.x(1)+5, cart.x(3)-5, dist_text);
+    text(cart.x(1)+5, cart.x(3)-10, dir_text);
     
     grid on
     hold on
@@ -111,9 +113,9 @@ for n = 0:dt:end_time
     plot(yt(1),yt(3),'ro')
     
     % draw the desired time to impact
-    tr = tr - dt;
+    tr = t_hit - n;
     timer = sprintf('Time Remaining: %.01f',tr);
-    text(1.1*y(1),1.1*y(3),timer)
+    text(1.1*cart.x(1),1.1*cart.x(3),timer)
     
     hold off
     

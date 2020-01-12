@@ -1,4 +1,4 @@
-function [dx,u] = AngularControl(s,r)
+function [dx,u] = Control(s,r)
 %ANGULARDYNAMICS Summary of this function goes here
 %   Detailed explanation goes here
 
