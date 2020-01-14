@@ -57,14 +57,38 @@ for i = 1:length(tspan)
     X(i,:) = angular.x';
     
     %% Define cartesian control law
+    % Establish the reference values
+    r2 = [cart.x(1)  ;
+          vd*cos(wd) ;
+          cart.x(3)  ;
+          vd*sin(wd)];
+
+    % Determine the controller input
+    xh = cart.x-r2;
+    u = -cart.k*xh;
     
-    r2 = [cart.x(1) ;
-          angular.x(1)*cos(angular.x(2)) ;
-          cart.x(3) ;
-          angular.x(1)*sin(angular.x(2))];
-      
-    [dx2,u2] = Control(cart,r2);
-    dx2 = dx2-[0 0 0 1.5]'; % Gravity
+    % Find the forward and orthogonal vectors
+    vf = [cart.x(2) cart.x(4)]';
+    vo = [vf(2) -vf(1)]';
+    % Normalize
+    vf = vf/norm(vf);
+    vo = vo/norm(vo);
+    
+    % Apply limits based on our current angle
+    ff = dot(u,vf);
+    of = dot(u,vo);
+    ff = median([-10 ff 10]);
+    of = median([-2 of 2]);
+    u = ff*vf;
+    u = u+of.*vo;
+    
+    % Find the state differential
+    dx2 = cart.A*cart.x+cart.B*u;
+
+    % External forces (gravity, etc.)
+    dx2 = dx2-[0 0 0 1.5]';
+    
+    % Apply law
     cart.x = cart.x+dx2*dt;
     
     %% Model the target
