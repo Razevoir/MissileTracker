@@ -12,7 +12,7 @@ t_hit = 5;
 %% Missile dynamics
 
 % Set up high level dynamics for interceptor
-angular = AngularDynamics;
+%angular = AngularDynamics;
 
 cart = CartesianDynamics;
 
@@ -20,7 +20,7 @@ cart = CartesianDynamics;
 vi = 5;
 wi = pi/2;
 
-angular.x = [vi wi 0]';
+%angular.x = [vi wi 0]';
 cart.x = [0 vi*cos(wi) 0 vi*sin(wi)]';
 
 %% Custom iterative solver
@@ -32,32 +32,20 @@ tspan = 0:dt:end_time;
 steps = size(tspan,2);
 tr = t_hit; % time remaining to impact
 
-X = zeros(steps,size(angular.x,1));
+X = zeros(steps,size(cart.x,1));
 U = zeros(steps,2);
 
 for i = 1:length(tspan)
-    %% Define angular control law
-    
-    e = yt-cart.x;
-    
-    d=sqrt(e(1)^2+e(3)^2);
-    vd = d/tr;
-    
-    wd = atan2(e(3),e(1));
-    
-    r = [vd; % desired forward velocity
-         wd; % desired angular position
-         0]; % desired angular velocity
-     
-    [dx,u] = Control(angular,r);
-    angular.x = angular.x+dx*dt;
-    
-    % Store the output to plot later
-    U(i,:) = u';
-    X(i,:) = angular.x';
-    
     %% Define cartesian control law
     % Establish the reference values
+    e = yt-cart.x;
+    
+    % Determine the velocity needed to reach the target at tr=0
+    d=sqrt(e(1)^2+e(3)^2);
+    vd = d/tr;
+    % Find the direction to accelerate
+    wd = atan2(e(3),e(1));
+    % Build the reference vector
     r2 = [cart.x(1)  ;
           vd*cos(wd) ;
           cart.x(3)  ;
@@ -67,20 +55,21 @@ for i = 1:length(tspan)
     xh = cart.x-r2;
     u = -cart.k*xh;
     
-    % Find the forward and orthogonal vectors
+    % Find the forward and orthogonal vectors of motion
     vf = [cart.x(2) cart.x(4)]';
     vo = [vf(2) -vf(1)]';
     % Normalize
     vf = vf/norm(vf);
     vo = vo/norm(vo);
     
-    % Apply limits based on our current angle
+    % Project control vector onto the relative missile vectors
     ff = dot(u,vf);
     of = dot(u,vo);
+    % Limit the magnitude of the forward and orthogonal forces
     ff = median([-10 ff 10]);
     of = median([-2 of 2]);
-    u = ff*vf;
-    u = u+of.*vo;
+    % Set u to the new limited values
+    u = ff*vf+of*vo;
     
     % Find the state differential
     dx2 = cart.A*cart.x+cart.B*u;
@@ -90,6 +79,10 @@ for i = 1:length(tspan)
     
     % Apply law
     cart.x = cart.x+dx2*dt;
+    
+    % Plot effort and states
+    U(i,:) = [ff of];
+    X(i,:) = cart.x';
     
     %% Model the target
     
@@ -143,7 +136,7 @@ plot(tspan,X)
 title('System States vs Time')
 xlabel('Time')
 ylabel('Magnitude')
-legend('x1 - forward velocity','x2 - angular position','x3 - angular velocity')
+legend('x1 - Horizontal Position','x2 - Horizontal Velocity','x3 - Vertical Position','x4 - Vertical Velocity')
 grid on
 
 % plot controller effort VS time

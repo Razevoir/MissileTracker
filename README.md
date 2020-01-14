@@ -9,22 +9,20 @@ If this is the case, the interceptor and the target collide and the objective is
 
 # Implementation
 In the current model, the linear dynamics of a point mass are used to model the interceptor at a high level.
-The basic control logic attempts to orient the missile so that it's pointing towards the target point, then adjust its speed so it arrives at the target time.
-The high level logic uses 3 states, representing the forward velocity, angular position, and angular velocity of the missile.
+The controller uses state feedback to follow a trajectory leading to the target.
+The trajectory is a straight line from the point to the target.
+The controller also converges to a target velocity, calculated by dividing the distance to the target by the time remaining until collision.
 
-This model sits on top of a lower level model, representing the missile's states in cartesian space.
-The lower level model uses horizontal position, horizontal velocity, vertical position, and vertical velocity.
-This representation allows for a much more sophisticated representation of the movement of the mass through two dimensional space.
-An additional controller was designed to help the cartesian states of the system track the abstract states of the higher level controller.
-Using this design strategy, high level control design can be done separately from the low level design and should still function as intended.
+The missile's actuator/thruster limits are modeled by projecting the control input onto the missile's relative (x,y) plane.
+The forward and orthogonal vectors of motion for the missile are calculated and normalized, then the controller input is projected onto these two vectors.
+The orthogonal limit to the orthogonal and forward forces the thrusters can apply is modeled by simply limiting the values along these axes.
+The limited controller values are then applied to the model and used to calculate the real trajectory of the missile.
 
 # Use
 To run this code, use Matlab to run MissileTracker.m.
-The dynamics for the high level angular model can be changed by modifying the AngularDynamics.m file.
-The dynamics for the low level cartesian model can be changed by modifying the CartesianDynamics.m file.
-Both files determine how their respective models respond to controller input.
+The dynamics for the model can be changed by modifying the CartesianDynamics.m file.
 
-The reference values each model tries to converge to are determined in MissileTracker.m.
+The reference values the model tries to converge to are determined in MissileTracker.m.
 This file can be modified to change how the values are calculated.
 
 Currently, the target is simply a point and time determined by code in MissileTracker.m.
